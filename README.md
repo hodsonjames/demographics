@@ -1,2 +1,2 @@
-# gender
-Classification of Gender from Names and Photos
+# demographics
+Classification of Gender and Ethnicity from Names and Photos
