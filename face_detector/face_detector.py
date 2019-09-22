@@ -17,7 +17,7 @@ detector = dlib.get_frontal_face_detector()
 win = dlib.image_window() #to show the detected face in a GUI screen
 
 #list of image filepaths
-pathlist = Path("sample_photos").glob('*.jpg*')
+pathlist = Path("C:\\Users\\yasoob\\Desktop\\Demographic Research\\data\\photos").glob('*.jpg*')
 
 for path in pathlist:
     path_str = str(path) #since path is an object
@@ -32,9 +32,10 @@ for path in pathlist:
         win.clear_overlay()
         win.set_image(img)
         win.add_overlay(detections)
-        time.sleep(1)
+        #time.sleep(1) # use this if you want to see each img's face detection
     except RuntimeError:
-        os.remove(path_str)
+        #os.remove(path_str) # use this if you want to clean up the data and remove corrupted imgs
+        continue
     
 
 
