@@ -14,8 +14,13 @@ from pathlib import Path
 detector = dlib.get_frontal_face_detector()
 win = dlib.image_window() #to show the detected face in a GUI screen
 
-for f in sys.argv[1:]:
-    img = dlib.load_rgb_image(f)
+#list of image filepaths
+pathlist = Path('sample_photos').glob('*.jpg*')
+
+for path in pathlist:
+    path_str = str(path) #since path is an object
+    print(path_str)
+    img = dlib.load_rgb_image(path_str)
     detections = detector(img, 1) #upsampled the image to allow greater detection
     print("Num of faces : {}".format(len(detections)))
     for i, d in enumerate(detections):
