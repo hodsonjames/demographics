@@ -10,6 +10,7 @@
 import sys
 import dlib
 import time
+import os
 from pathlib import Path
 
 detector = dlib.get_frontal_face_detector()
@@ -23,17 +24,18 @@ for path in pathlist:
     print(path_str)
     try: 
         img = dlib.load_rgb_image(path_str)
+        detections = detector(img, 1) #upsampled the image to allow greater detection
+        print("Num of faces : {}".format(len(detections)))
+        for i, d in enumerate(detections):
+            print("Detection {}: Left: {} Top: {} Right: {} Bottom: {}".format(
+                i, d.left(), d.top(), d.right(), d.bottom()))
+        win.clear_overlay()
+        win.set_image(img)
+        win.add_overlay(detections)
+        time.sleep(1)
     except RuntimeError:
-        
-    detections = detector(img, 1) #upsampled the image to allow greater detection
-    print("Num of faces : {}".format(len(detections)))
-    for i, d in enumerate(detections):
-        print("Detection {}: Left: {} Top: {} Right: {} Bottom: {}".format(
-            i, d.left(), d.top(), d.right(), d.bottom()))
-    win.clear_overlay()
-    win.set_image(img)
-    win.add_overlay(detections)
-    time.sleep(1)
+        os.remove(path_str)
+    
 
 
 
