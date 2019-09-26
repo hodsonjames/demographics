@@ -9,7 +9,7 @@
 # Some modifications have been made to make the code suitable for personal requirements
 # 
 
-import face_detector as fc
+import face_detector
 
 # list of image filepaths
 # use this for the entire set of data
@@ -18,5 +18,5 @@ import face_detector as fc
 # use this to test only the sample
 pathlist = "sample_photos"
 
-face_detector = fc.FaceDetector(pathlist) # runs the detector on all the images in pathlist
+face_detector = face_detector.FaceDetector(pathlist) # runs the detector on all the images in pathlist
 

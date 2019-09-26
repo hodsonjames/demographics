@@ -11,7 +11,7 @@ import sys
 import dlib
 import time
 import os
-import pathlib
+from pathlib import Path
 
 class FaceDetector:
     
@@ -22,7 +22,7 @@ class FaceDetector:
         :param path: the path to the folder for the list images in the data set
         :type path: str
         """
-        self.path = pathlib.Path(pathlist).glob('*.jpg*')
+        self.path = Path(pathlist).glob('*.jpg*')
         self.detector = dlib.get_frontal_face_detector()
         self.win = dlib.image_window() # to show the detected face in a GUI screen
         self.detect_faces()
@@ -36,8 +36,8 @@ class FaceDetector:
         for img_path in self.path:
             path_str = str(img_path) # since path is an object
             try: 
-                img, detections = detections(path_str)
-                display_img(img, detections)
+                img, img_detec = self.detections(path_str)
+                self.display_img(img, img_detec)
             except RuntimeError:
                 # os.remove(path_str) # use this if you want to clean up the data and remove corrupted imgs
                 continue
@@ -50,8 +50,8 @@ class FaceDetector:
         and detections containing the specifications of the image.
         """
         img = dlib.load_rgb_image(path)
-        detections = self.detector(img, 1) # upsampled the image to allow more accurate detection
-        return img, detections
+        img_detecs = self.detector(img, 1) # upsampled the image to allow more accurate detection
+        return img, img_detecs
 
     def display_img(self, img, detections):
         """
