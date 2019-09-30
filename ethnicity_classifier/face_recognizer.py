@@ -26,7 +26,8 @@ IMG_DIM = 96
 input_folder_path = "sample_photos"
 
 # the directory you want to save the preprocessed images to
-output_folder_path = "preprocessed_sample_photos"
+# currently saving in same directory to observe the differences after preprocessing
+output_folder_path = "sample_photos"
 
 if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
@@ -42,7 +43,12 @@ def main():
     img_paths = glob.glob(os.path.join(input_folder_path, '*.jpg'))
 
     for inp_img_path in img_paths:
-        out_img_path = os.path.join(output_folder_path, os.path.basename(inp_img_path))
+        # this gives us just the img name, such as img_name.jpg
+        inp_img_name = os.path.basename(inp_img_path) 
+        # this gives us just the output img name, such as img_name_preprocessed.jpg
+        out_img_name = os.path.splitext(inp_img_name)[0] + "_preprocessed" + os.path.splitext(inp_img_name)[1]
+
+        out_img_path = os.path.join(output_folder_path, out_img_name)
         output_img = preprocess(inp_img_path, out_img_path)
 
 def preprocess(inp_path, out_path):
@@ -61,8 +67,6 @@ def preprocess(inp_path, out_path):
     largest_face = transformer.getLargestFaceBoundingBox(image)
     preprocessed_img = transformer.align(IMG_DIM, image, largest_face)
 
-    cv2.imshow('image', image)
-    time.sleep(1)
     cv2.imwrite(out_path, preprocessed_img)
     return preprocessed_img
 
