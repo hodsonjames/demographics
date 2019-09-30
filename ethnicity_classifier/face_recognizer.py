@@ -12,11 +12,14 @@ import time
 import os 
 import glob
 import cv2
-from align_dlib import AlignDlib
+from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
 # standardizing the images
 IMG_DIM = 96 
+
+# the benchmark performance time taken to preprocess a single image
+BENCHMARK_TIME = 0.04731
 
 # filepath for the folder containing all the images
 # use this for the entire set of data
@@ -40,9 +43,14 @@ transformer = AlignDlib(predic_path)
 
 def main():
 
+    start_time = time.time()
+    num_images = 0
+
     img_paths = glob.glob(os.path.join(input_folder_path, '*.jpg'))
 
     for inp_img_path in img_paths:
+        num_images += 1
+
         # this gives us just the img name, such as img_name.jpg
         inp_img_name = os.path.basename(inp_img_path) 
         # this gives us just the output img name, such as img_name_preprocessed.jpg
@@ -50,6 +58,10 @@ def main():
 
         out_img_path = os.path.join(output_folder_path, out_img_name)
         output_img = preprocess(inp_img_path, out_img_path)
+
+
+    time_taken = time.time() - start_time
+    performance_test(time_taken, num_images)
 
 def preprocess(inp_path, out_path):
     """
@@ -63,12 +75,46 @@ def preprocess(inp_path, out_path):
     """
 
     image = cv2.imread(inp_path, )
+    
+    # if image file is corrupted, removes the file from the samples
+
+    if image is None:
+        os.remove(inp_path)
+        return
 
     largest_face = transformer.getLargestFaceBoundingBox(image)
     preprocessed_img = transformer.align(IMG_DIM, image, largest_face)
 
     cv2.imwrite(out_path, preprocessed_img)
     return preprocessed_img
+
+def performance_test(total_time, total_images):
+    """
+    Compares the execution time of the program to the benchmark performance time established.
+    If the execution time is a lot greater than expected, prints out an error to inform the user
+    that the modification of the code is inefficient and needs to be fixed.
+    :param total_time: the total time consumed to run all the images in seconds
+    :type total_time: floating number
+    :param total_images: the total number of images processed by the program
+    :type total_images: integer
+    """
+
+    avg_time = total_time / total_images
+    dif_factor = avg_time / BENCHMARK_TIME
+
+    print("The benchmark time taken for a single image is {}".format(BENCHMARK_TIME))
+    print("The time taken in this execution is {}".format(avg_time))
+    print("The current execution time is {} that of the benchmark".format(dif_factor))
+
+
+    if dif_factor >= 1.1:
+        print("Please check for inefficiences in the modified code and rectify them")
+
+    if dif_factor <= 0.9:
+        print("Good job in improving code efficiency!")
+
+
+
 
 main()
 
