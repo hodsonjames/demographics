@@ -21,6 +21,10 @@ IMG_DIM = 96
 # the benchmark performance time taken to preprocess a single image
 BENCHMARK_TIME = 0.04731
 
+# the factor limit by which you consider the modified code to be faster/slower than the benchmark
+FASTER_FACTOR = 0.9
+SLOWER_FACTOR = 1.1
+
 # filepath for the folder containing all the images
 # use this for the entire set of data
 # input_folder_path = "C:\\Users\\yasoob\\Desktop\\Demographic Research\\data\\photos"
@@ -107,10 +111,10 @@ def performance_test(total_time, total_images):
     print("The current execution time is {} that of the benchmark".format(dif_factor))
 
 
-    if dif_factor >= 1.1:
+    if dif_factor >= SLOWER_FACTOR:
         print("Please check for inefficiences in the modified code and rectify them")
 
-    if dif_factor <= 0.9:
+    if dif_factor <= FASTER_FACTOR:
         print("Good job in improving code efficiency!")
 
 
