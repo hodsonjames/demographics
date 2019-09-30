@@ -25,23 +25,22 @@ BENCHMARK_TIME = 0.04731
 FASTER_FACTOR = 0.9
 SLOWER_FACTOR = 1.1
 
-# filepath for the folder containing all the images
-# use this for the entire set of data
-# input_folder_path = "C:\\Users\\yasoob\\Desktop\\Demographic Research\\data\\photos"
-
 # use this to test only the sample
-input_folder_path = "sample_photos"
+input_folder_name = "sample_photos"
+input_folder_path = os.path.join(os.path.dirname(__file__), input_folder_name)
 
 # the directory you want to save the preprocessed images to
 # currently saving in same directory to observe the differences after preprocessing
-output_folder_path = "sample_photos"
+output_folder_name = "sample_photos"
+output_folder_path = os.path.join(os.path.dirname(__file__), input_folder_name)
 
 if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
 # The facial landmarks training file to identify the landmarks on the detected img
 # sourced from: http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
-predic_path = 'shape_predictor_68_face_landmarks.dat'
+landmark_training_name = 'shape_predictor_68_face_landmarks.dat'
+predic_path = os.path.join(os.path.dirname(__file__), landmark_training_name)
 
 transformer = AlignDlib(predic_path)
 
@@ -65,7 +64,7 @@ def main():
 
 
     time_taken = time.time() - start_time
-    performance_test(time_taken, num_images)
+    performanceTest(time_taken, num_images)
 
 def preprocess(inp_path, out_path):
     """
@@ -92,7 +91,7 @@ def preprocess(inp_path, out_path):
     cv2.imwrite(out_path, preprocessed_img)
     return preprocessed_img
 
-def performance_test(total_time, total_images):
+def performanceTest(total_time, total_images):
     """
     Compares the execution time of the program to the benchmark performance time established.
     If the execution time is a lot greater than expected, prints out an error to inform the user
