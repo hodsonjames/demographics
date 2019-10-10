@@ -1,6 +1,11 @@
 # 
 # Application that recognizes the ethnicity of the faces present inside all images
 # 
+# The openface library is cited as follows:
+# B. Amos, B. Ludwiczuk, M. Satyanarayanan,
+# "Openface: A general-purpose face recognition library with mobile applications,"
+# CMU-CS-16-118, CMU School of Computer Science, Tech. Rep., 2016.
+# 
 # Sources:
 # http://dlib.net/face_landmark_detection.py.html
 # https://hackernoon.com/building-a-facial-recognition-pipeline-with-deep-learning-in-tensorflow-66e7645015b8
@@ -12,7 +17,8 @@ import time
 import os 
 import glob
 import cv2
-from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
+import multiprocessing as mp
+import openface as of
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
 # standardizing the images
@@ -44,7 +50,7 @@ if not os.path.exists(output_folder_path):
 landmark_training_name = 'shape_predictor_68_face_landmarks.dat'
 predic_path = os.path.join(os.path.dirname(__file__), landmark_training_name)
 
-transformer = AlignDlib(predic_path)
+transformer = of.AlignDlib(predic_path)
 
 # variables to measure performance and accuracy of code
 start_time = time.time()
@@ -64,7 +70,7 @@ def main():
 
     for inp_img_path in img_paths:
 
-        if num_images >= 3000:
+        if num_images >= 30:
             break
 
         # this gives us just the img name, such as img_name.jpg
