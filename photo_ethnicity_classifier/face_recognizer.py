@@ -12,7 +12,6 @@ import time
 import os 
 import glob
 import cv2
-import multiprocessing as mp
 from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
