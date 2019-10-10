@@ -8,5 +8,7 @@
 			"uri": "gitlens://cdeb366/c:/Users/yasoob/Desktop/Demographic Research/demographics?{\"path\":\"/c:/Users/yasoob/Desktop/Demographic Research/demographics\",\"ref\":\"cdeb3664c3cd1045dcea63cc82ae22c7b460c771\",\"repoPath\":\"c:/Users/yasoob/Desktop/Demographic Research/demographics\"}"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
 }

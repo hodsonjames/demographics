@@ -46,11 +46,16 @@ predic_path = os.path.join(os.path.dirname(__file__), landmark_training_name)
 
 transformer = AlignDlib(predic_path)
 
-def main():
+# variables to measure performance and accuracy of code
+start_time = time.time()
+num_images = 0
+# alll corrupted images that the computer can not read and convert to RGB format
+corrupted_images = 0
+# images without any faces detected by the algorithm. Logos, etc. or inaccurate detection
+faceless_images = 0 
 
-    # variables to measure performance of code
-    start_time = time.time()
-    num_images = 0
+def main():
+    global num_images
 
     # list of all the images contained within the input_folder_path
     img_paths = glob.glob(os.path.join(input_folder_path, '*.jpg'))
@@ -66,9 +71,6 @@ def main():
         out_img_path = os.path.join(output_folder_path, out_img_name)
         output_img = preprocess(inp_img_path, out_img_path)
 
-    time_taken = time.time() - start_time
-    performanceTest(time_taken, num_images)
-
 def preprocess(inp_path, out_path):
     """
     Detects the face present inside an image and preprocesses it by cropping, 
@@ -79,22 +81,27 @@ def preprocess(inp_path, out_path):
     :param out_path: The output path for the preprocessed image to be stored as
     :type out_path: string
     """
+    global corrupted_images, faceless_images
 
     # reads the image file and converts it into an RGB array
     image = cv2.imread(inp_path, )
     
     # if image file is corrupted, removes the file from the samples
     if image is None:
+        corrupted_images += 1
         os.remove(inp_path)
-        return
+        return None
 
     largest_face = transformer.getLargestFaceBoundingBox(image)
     preprocessed_img = transformer.align(IMG_DIM, image, largest_face)
 
+    if preprocessed_img is None:
+        faceless_images += 1
+
     cv2.imwrite(out_path, preprocessed_img)
     return preprocessed_img
 
-def performanceTest(total_time, total_images):
+def performanceTest():
     """
     Compares the execution time of the program to the benchmark performance time established.
     If the execution time is a lot greater than expected, prints out an error to inform the user
@@ -105,7 +112,8 @@ def performanceTest(total_time, total_images):
     :type total_images: integer
     """
 
-    avg_time = total_time / total_images
+    total_time = time.time() - start_time
+    avg_time = total_time / num_images
     dif_factor = avg_time / BENCHMARK_TIME
 
     print("The benchmark time taken for a single image is {}".format(BENCHMARK_TIME))
@@ -119,5 +127,27 @@ def performanceTest(total_time, total_images):
     if dif_factor <= FASTER_FACTOR:
         print("Good job in improving code efficiency!")
 
+def accuracyTest():
+    """
+    Measures and prints out the accuracy rate of the program.
+    Specifies the number of images the program found were corrupted. Also specifies
+    the images in which the program detected no face, either because no face existed
+    (such as logos, company profile pictures, animal pictures, etc.) or because the model 
+    was inaccurate in detecting the face present.
+    """
+    perc_corrupted = corrupted_images / num_images
+    perc_undetected = faceless_images / num_images
+    total_noisy_img = corrupted_images + faceless_images
+    perc_noisy_img = total_noisy_img / num_images
+    perc_detected = (num_images - total_noisy_img) / num_images
+
+    print("\n {} of the images were corrupted".format(perc_corrupted))
+    print("{} of the images had no detected faces".format(perc_undetected))
+    print("{} of the total images were noisy (corrupted or no detected faces)".format(perc_noisy_img))
+    print("{} of the images had a detectable face".format(perc_detected))
+
 main()
+performanceTest()
+accuracyTest()
+
 
