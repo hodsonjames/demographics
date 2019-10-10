@@ -12,6 +12,7 @@ import time
 import os 
 import glob
 import cv2
+import multiprocessing as mp
 from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
@@ -19,7 +20,7 @@ from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, 
 IMG_DIM = 96 
 
 # the benchmark performance time taken to preprocess a single image
-BENCHMARK_TIME = 0.04731
+BENCHMARK_TIME = 0.0249
 
 # the factor limit by which you consider the modified code to be faster/slower than the benchmark
 FASTER_FACTOR = 0.9 # 10% faster than the benchmark
@@ -57,11 +58,15 @@ faceless_images = 0
 def main():
     global num_images
 
+    pool = mp.Pool(processes = mp.cpu_count())
+    print(mp.cpu_count())
     # list of all the images contained within the input_folder_path
-    img_paths = glob.glob(os.path.join(input_folder_path, '*.jpg'))
+    img_paths = glob.glob(os.path.join(input_folder_path, '**/*.jpg'), recursive=True)
 
     for inp_img_path in img_paths:
-        num_images += 1
+
+        if num_images >= 3000:
+            break
 
         # this gives us just the img name, such as img_name.jpg
         inp_img_name = os.path.basename(inp_img_path) 
@@ -69,7 +74,13 @@ def main():
         out_img_name = os.path.splitext(inp_img_name)[0] + "_preprocessed" + os.path.splitext(inp_img_name)[1]
 
         out_img_path = os.path.join(output_folder_path, out_img_name)
-        output_img = preprocess(inp_img_path, out_img_path)
+        output_img = pool.apply_async(preprocess(inp_img_path, out_img_path))
+
+        num_images += 1
+        
+    
+    pool.close()
+    pool.join()
 
 def preprocess(inp_path, out_path):
     """
@@ -116,9 +127,10 @@ def performanceTest():
     avg_time = total_time / num_images
     dif_factor = avg_time / BENCHMARK_TIME
 
+    print("For {} images, the total time taken was {} sec".format(num_images, total_time))
     print("The benchmark time taken for a single image is {}".format(BENCHMARK_TIME))
     print("The time taken in this execution is {}".format(avg_time))
-    print("The current execution time is {} that of the benchmark".format(dif_factor))
+    print("The current execution time is {} of the benchmark".format(dif_factor))
 
 
     if dif_factor >= SLOWER_FACTOR:
@@ -141,13 +153,17 @@ def accuracyTest():
     perc_noisy_img = total_noisy_img / num_images
     perc_detected = (num_images - total_noisy_img) / num_images
 
-    print("\n {} of the images were corrupted".format(perc_corrupted))
+    print("\n{} total images were processed".format(num_images))
+    print("{} of the images were corrupted".format(perc_corrupted))
     print("{} of the images had no detected faces".format(perc_undetected))
     print("{} of the total images were noisy (corrupted or no detected faces)".format(perc_noisy_img))
     print("{} of the images had a detectable face".format(perc_detected))
 
-main()
-performanceTest()
-accuracyTest()
+if __name__ == "__main__":
+    main()
+    performanceTest()
+    accuracyTest()  
+
+
 
 
