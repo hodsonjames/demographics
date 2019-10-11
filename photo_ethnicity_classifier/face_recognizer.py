@@ -18,6 +18,7 @@ import os
 import glob
 import cv2
 import multiprocessing as mp
+import face_recognition
 import openface as of
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
