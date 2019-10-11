@@ -1,11 +1,6 @@
 # 
 # Application that recognizes the ethnicity of the faces present inside all images
 # 
-# The openface library is cited as follows:
-# B. Amos, B. Ludwiczuk, M. Satyanarayanan,
-# "Openface: A general-purpose face recognition library with mobile applications,"
-# CMU-CS-16-118, CMU School of Computer Science, Tech. Rep., 2016.
-# 
 # Sources:
 # http://dlib.net/face_landmark_detection.py.html
 # https://hackernoon.com/building-a-facial-recognition-pipeline-with-deep-learning-in-tensorflow-66e7645015b8
@@ -18,8 +13,7 @@ import os
 import glob
 import cv2
 import multiprocessing as mp
-import face_recognition
-import openface as of
+from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
 # standardizing the images
@@ -51,7 +45,7 @@ if not os.path.exists(output_folder_path):
 landmark_training_name = 'shape_predictor_68_face_landmarks.dat'
 predic_path = os.path.join(os.path.dirname(__file__), landmark_training_name)
 
-transformer = of.AlignDlib(predic_path)
+transformer = AlignDlib(predic_path)
 
 # variables to measure performance and accuracy of code
 start_time = time.time()
@@ -80,7 +74,7 @@ def main():
         out_img_name = os.path.splitext(inp_img_name)[0] + "_preprocessed" + os.path.splitext(inp_img_name)[1]
 
         out_img_path = os.path.join(output_folder_path, out_img_name)
-        output_img = pool.apply_async(preprocess(inp_img_path, out_img_path))
+        pre_processed_img = pool.apply_async(preprocess(inp_img_path, out_img_path))
 
         num_images += 1
         
@@ -169,7 +163,4 @@ if __name__ == "__main__":
     main()
     performanceTest()
     accuracyTest()  
-
-
-
 
