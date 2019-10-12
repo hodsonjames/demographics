@@ -9,10 +9,13 @@
 # 
 
 import time
+import numpy as np
+import pandas as pd
 import os 
 import glob
 import cv2
 import multiprocessing as mp
+import dlib
 from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
 # the dimensions in pixel that you want to crop the image to after preprocessing for  
@@ -26,26 +29,41 @@ BENCHMARK_TIME = 0.0249
 FASTER_FACTOR = 0.9 # 10% faster than the benchmark
 SLOWER_FACTOR = 1.1 # 10% slower than the benchmark
 
+file_path = os.path.abspath(os.path.dirname(__file__))
+models_path = file_path + "/models/"
+
 # the directory name containing all the image data
 # default folder path is used to test only the sample
 input_folder_name = "sample_photos"
-input_folder_path = os.path.join(os.path.dirname(__file__), input_folder_name)
+input_folder_path = os.path.join(file_path, input_folder_name)
 
 # the directory you want to save the preprocessed images to
 # currently saving in same directory to observe the differences after preprocessing
 output_folder_name = "sample_photos"
-output_folder_path = os.path.join(os.path.dirname(__file__), input_folder_name)
+output_folder_path = os.path.join(file_path, input_folder_name)
 
 # if the output directory does not exist, create it 
 if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
+
 # The facial landmarks training file to identify the landmarks on the detected img
 # sourced from: http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 landmark_training_name = 'shape_predictor_68_face_landmarks.dat'
-predic_path = os.path.join(os.path.dirname(__file__), landmark_training_name)
+predic_path = os.path.join(models_path, landmark_training_name)
 
-transformer = AlignDlib(predic_path)
+# The pretrained facial recognition model, currently using dlibs ResNetv1 model
+# sourced from: http://dlib.net/files/dlib_face_recognition_resnet_model_v1.dat.bz2
+facerec_model_name = 'dlib_face_recognition_resnet_model_v1.dat'
+facerec_path = os.path.join(models_path, facerec_model_name)
+
+# Load all the models we need: a detector to find the faces, a shape predictor
+# to find face landmarks so we can precisely localize the face, and finally the
+# face recognition model.
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(predic_path)
+facerec = dlib.face_recognition_model_v1(facerec_path)
+
 
 # variables to measure performance and accuracy of code
 start_time = time.time()
@@ -54,6 +72,10 @@ num_images = 0
 corrupted_images = 0
 # images without any faces detected by the algorithm. Logos, etc. or inaccurate detection
 faceless_images = 0 
+
+# a list of the vector encodings and img names
+feature_vecs = []
+img_names = []
 
 def main():
     global num_images
@@ -78,9 +100,12 @@ def main():
 
         num_images += 1
         
-    
     pool.close()
     pool.join()
+
+    # df_feat = pd.DataFrame(features_vec, index=img_names)
+    # df_feat.to_csv("feature.csv")
+
 
 def preprocess(inp_path, out_path):
     """
@@ -91,26 +116,67 @@ def preprocess(inp_path, out_path):
     :type inp_path: string
     :param out_path: The output path for the preprocessed image to be stored as
     :type out_path: string
+    :return: A list containing the aligned RGB image Shape: (imgDim, imgDim, 3) 
+    and the landmark points. 
+    :rtype: list[numpy.ndarray, points]		
     """
     global corrupted_images, faceless_images
 
     # reads the image file and converts it into an RGB array
-    image = cv2.imread(inp_path, )
-    
+    image = cv2.imread(inp_path, 1)
+
     # if image file is corrupted, removes the file from the samples
     if image is None:
         corrupted_images += 1
         os.remove(inp_path)
         return None
 
-    largest_face = transformer.getLargestFaceBoundingBox(image)
-    preprocessed_img = transformer.align(IMG_DIM, image, largest_face)
+    cv2.imshow('img', image)
+    cv2.waitKey(1000)
 
-    if preprocessed_img is None:
+    # Ask the detector to find the bounding boxes of each face. The 1 in the
+    # second argument indicates that we should upsample the image 1 time. This
+    # will make everything bigger and allow us to detect more faces.
+    faces = detector(image, 1)
+
+    if len(faces) == 0:
         faceless_images += 1
+        return
 
-    cv2.imwrite(out_path, preprocessed_img)
-    return preprocessed_img
+    # select the largest face out of all the faces in the image
+    face = max(faces, key=lambda rect: rect.width() * rect.height())
+    # Get the landmarks/parts for the face in box face.
+    face_landmarks = predictor(image, face)	
+    aligned_img = dlib.get_face_chip(image, face_landmarks)
+
+    # Compute the 128D vector that describes the face in aligned_img identified by
+    # shape.  In general, if two face descriptor vectors have a Euclidean
+    # distance between them less than 0.6 then they are from the same
+    # person, otherwise they are from different people.
+    # face_descriptor = facerec.compute_face_descriptor(aligned_img, face_landmarks)
+    # feature_vecs.append(np.array(face_descriptor))
+    # img_names.append(os.path.basename(inp_path))
+
+    cv2.imshow('img', aligned_img)
+    cv2.waitKey(1000)
+
+    cv2.imwrite(out_path, aligned_img)
+    return aligned_img
+
+def encoding(img):
+    """
+    Compute the 128D vector that describes the face in img identified by
+    shape.  In general, if two face descriptor vectors have a Euclidean
+    distance between them less than 0.6 then they are from the same
+    person, otherwise they are from different people. Here we just print
+    the vector to the screen.
+    :param img: A list containing the aligned RGB image Shape: (imgDim, imgDim, 3) 
+    and the landmark points. 
+    :type img: list[numpy.ndarray, points]		
+    """
+
+    face_descriptor = facerec.compute_face_descriptor(img[0], img[1])
+    print(face_descriptor)
 
 def performanceTest():
     """

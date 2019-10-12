@@ -138,7 +138,7 @@ class AlignDlib:
         assert bb is not None	
 
         points = self.predictor(rgbImg, bb)	
-        return list(map(lambda p: (p.x, p.y), points.parts()))	
+        return [points, list(map(lambda p: (p.x, p.y), points.parts()))]
 
     def align(self, imgDim, rgbImg, bb=None,	
               landmarks=None, landmarkIndices=INNER_EYES_AND_BOTTOM_LIP,	
@@ -159,8 +159,9 @@ class AlignDlib:
         :type landmarkIndices: list of ints	
         :param skipMulti: Skip image if more than one face detected.	
         :type skipMulti: bool	
-        :return: The aligned RGB image. Shape: (imgDim, imgDim, 3)	
-        :rtype: numpy.ndarray	
+        :return: A list containing the aligned RGB image Shape: (imgDim, imgDim, 3) 
+        and the landmark points. 
+        :rtype: list[numpy.ndarray, points]	
         """	
         assert imgDim is not None	
         assert rgbImg is not None	
@@ -174,11 +175,11 @@ class AlignDlib:
         if landmarks is None:	
             landmarks = self.findLandmarks(rgbImg, bb)	
 
-        npLandmarks = np.float32(landmarks)	
+        npLandmarks = np.float32(landmarks[1])	
         npLandmarkIndices = np.array(landmarkIndices)	
 
         H = cv2.getAffineTransform(npLandmarks[npLandmarkIndices],	
                                    imgDim * MINMAX_TEMPLATE[npLandmarkIndices])	
         thumbnail = cv2.warpAffine(rgbImg, H, (imgDim, imgDim))	
 
-        return thumbnail 
+        return [thumbnail, landmarks[0]]

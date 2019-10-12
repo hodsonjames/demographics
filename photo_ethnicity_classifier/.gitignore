@@ -1,5 +1,5 @@
 sample_photos/
 original_sample_photos/
-shape_predictor_68_face_landmarks.dat/
+models/
 UKTFace_CNN_training_data/
 openface/
