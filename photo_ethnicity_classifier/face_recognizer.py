@@ -44,7 +44,7 @@ output_folder_path = os.path.join(file_path, input_folder_name)
 
 # if the output directory does not exist, create it 
 if not os.path.exists(output_folder_path):
-        os.makedirs(output_folder_path)
+    os.makedirs(output_folder_path)
 
 
 # The facial landmarks training file to identify the landmarks on the detected img
