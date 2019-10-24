@@ -6,21 +6,24 @@
 # https://hackernoon.com/building-a-facial-recognition-pipeline-with-deep-learning-in-tensorflow-66e7645015b8
 # https://medium.com/@ageitgey/machine-learning-is-fun-part-4-modern-face-recognition-with-deep-learning-c3cffc121d78
 # 
-# 
-
+#
+import math
 import time
 import numpy as np
-import pandas as pd
-import os 
+from sklearn.model_selection import train_test_split
+# from sklearn.neural_network import MLPClassifier
+from sklearn import neighbors
+from sklearn.metrics import accuracy_score
+import os
 import glob
 import cv2
-import multiprocessing as mp
 import dlib
+import pickle
 from align_dlib import AlignDlib # class file taken from CMUs OpenFace Project, as cited
 
-# the dimensions in pixel that you want to crop the image to after preprocessing for  
+# the dimensions in pixel that you want to crop the image to after preprocessing for
 # standardizing the images
-IMG_DIM = 96 
+IMG_DIM = 96
 
 # the benchmark performance time taken to preprocess a single image
 BENCHMARK_TIME = 0.0249
@@ -68,26 +71,26 @@ facerec = dlib.face_recognition_model_v1(facerec_path)
 # variables to measure performance and accuracy of code
 start_time = time.time()
 num_images = 0
-# alll corrupted images that the computer can not read and convert to RGB format
+# all corrupted images that the computer can not read and convert to RGB format
 corrupted_images = 0
 # images without any faces detected by the algorithm. Logos, etc. or inaccurate detection
 faceless_images = 0 
 
-# a list of the vector encodings and img names
+# a list of the vector encodings, img names, and img attributes
 feature_vecs = []
 img_names = []
+attributes = []
+attribute_names = ['White', 'Black', 'Asian', 'Indian', 'Other']
 
 def main():
     global num_images
 
-    pool = mp.Pool(processes = mp.cpu_count())
-    print(mp.cpu_count())
     # list of all the images contained within the input_folder_path
     img_paths = glob.glob(os.path.join(input_folder_path, '**/*.jpg'), recursive=True)
 
     for inp_img_path in img_paths:
 
-        if num_images >= 30:
+        if num_images >= 3400:
             break
 
         # this gives us just the img name, such as img_name.jpg
@@ -96,15 +99,16 @@ def main():
         out_img_name = os.path.splitext(inp_img_name)[0] + "_preprocessed" + os.path.splitext(inp_img_name)[1]
 
         out_img_path = os.path.join(output_folder_path, out_img_name)
-        pre_processed_img = pool.apply_async(preprocess(inp_img_path, out_img_path))
+        pre_processed_img = preprocess(inp_img_path, out_img_path)
 
         num_images += 1
-        
-    pool.close()
-    pool.join()
 
-    # df_feat = pd.DataFrame(features_vec, index=img_names)
-    # df_feat.to_csv("feature.csv")
+    # Creates and trains a KNN classifier
+    train_model()
+
+    # test classifier on an individual image
+    # classify_img('23_0_1_20170120133824503.jpg.chip.jpg')
+
 
 
 def preprocess(inp_path, out_path):
@@ -131,8 +135,8 @@ def preprocess(inp_path, out_path):
         os.remove(inp_path)
         return None
 
-    cv2.imshow('img', image)
-    cv2.waitKey(1000)
+    # cv2.imshow('img', image)
+    # cv2.waitKey(1000)
 
     # Ask the detector to find the bounding boxes of each face. The 1 in the
     # second argument indicates that we should upsample the image 1 time. This
@@ -153,30 +157,102 @@ def preprocess(inp_path, out_path):
     # shape.  In general, if two face descriptor vectors have a Euclidean
     # distance between them less than 0.6 then they are from the same
     # person, otherwise they are from different people.
-    # face_descriptor = facerec.compute_face_descriptor(aligned_img, face_landmarks)
-    # feature_vecs.append(np.array(face_descriptor))
-    # img_names.append(os.path.basename(inp_path))
+    face_descriptor = facerec.compute_face_descriptor(aligned_img, face_landmarks)
 
-    cv2.imshow('img', aligned_img)
-    cv2.waitKey(1000)
+    # add the encodings vector into the features array
+    encodings_array = []
+    for encoding in face_descriptor:
+        encodings_array.append(encoding)
+    feature_vecs.append(encodings_array)
 
-    cv2.imwrite(out_path, aligned_img)
+    # add the image name to the img_names array
+    img_name = os.path.basename(inp_path)
+    img_names.append(img_name)
+
+    # add the img attributes to the attributes array
+    img_attributes = extract_attribute(img_name)
+    attributes.append(img_attributes)
+
+    # cv2.imshow('img', aligned_img)
+    # cv2.waitKey(1000)
+
+    # cv2.imwrite(out_path, aligned_img)
     return aligned_img
 
-def encoding(img):
+def extract_attribute(img_string):
     """
-    Compute the 128D vector that describes the face in img identified by
-    shape.  In general, if two face descriptor vectors have a Euclidean
-    distance between them less than 0.6 then they are from the same
-    person, otherwise they are from different people. Here we just print
-    the vector to the screen.
-    :param img: A list containing the aligned RGB image Shape: (imgDim, imgDim, 3) 
-    and the landmark points. 
-    :type img: list[numpy.ndarray, points]		
+    Finds the required attribute in an image name's string and then returns it
+    :param img_string: the string required to extract attribute info from
+    :return: an array containing the age, gender, and race of the specified image
+    """
+    split_string = img_string.split("_", -1)
+    return split_string[2]
+
+def train_model():
+    """
+    Creates and trains a KNN classifier that uses a set of labeled faces to
+    predict the ethnicity in an unknown image by finding the k most similar faces
+    (according to the closest facial features under eucledian distance)
     """
 
-    face_descriptor = facerec.compute_face_descriptor(img[0], img[1])
-    print(face_descriptor)
+    print(np.asarray(feature_vecs))
+    print(np.asarray(attributes))
+    train, test, train_labels, test_labels = train_test_split(feature_vecs,
+                                                              attributes,
+                                                              test_size=0.25,
+                                                              random_state=42)
+
+    print(np.asarray(train))
+    print(np.asarray(train_labels))
+    print(np.asarray(test))
+    print(np.asarray(test_labels))
+
+    # Classifier using MLP
+    # classifier = MLPClassifier(solver='adam',
+    #                            hidden_layer_sizes=(128, 128),
+    #                            activation='relu',
+    #                            max_iter=5000,
+    #                            tol=1e-4)
+
+    # Classifier using KNN
+    n_neighbors = int(round(math.sqrt(len(feature_vecs))))
+    classifier = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm='ball_tree', weights='distance')
+    classifier.fit(train, train_labels)
+
+    f = open('model.pkl', 'wb')
+    pickle.dump(classifier, f)
+    f.close()
+
+    preds = classifier.predict(test)
+    accuracy = accuracy_score(test_labels, preds)
+    print(preds)
+    print(accuracy)
+
+
+def classify_img(img_path, knn_clf=None):
+    """
+    Recognizes faces in given image using a trained KNN classifier
+    :param img_path: path to image to be recognized
+    :param knn_clf: (optional) a knn classifier object. if not specified, model_save_path must be specified.
+    """
+
+    # Load a trained KNN model (if one was passed in)
+    if knn_clf is None:
+        with open('model.pkl', 'rb') as f:
+            knn_clf = pickle.load(f)
+
+    # reads the image file and finds its faces, selecting largest
+    img = cv2.imread(img_path, 1)
+    faces = detector(img, 1)
+    face = max(faces, key=lambda rect: rect.width() * rect.height())
+    face_landmarks = predictor(img, face)
+    img = dlib.get_face_chip(img, face_landmarks)
+    # Find encodings for faces in the test img
+    encodings = facerec.compute_face_descriptor(img, face_landmarks)
+
+    # Use the KNN model to find the best matches for the test face
+    race = knn_clf.predict([encodings])
+    print(race)
 
 def performanceTest():
     """
@@ -225,8 +301,7 @@ def accuracyTest():
     print("{} of the total images were noisy (corrupted or no detected faces)".format(perc_noisy_img))
     print("{} of the images had a detectable face".format(perc_detected))
 
-if __name__ == "__main__":
-    main()
-    performanceTest()
-    accuracyTest()  
+main()
+# performanceTest()
+# accuracyTest()
 
