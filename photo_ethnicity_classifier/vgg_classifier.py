@@ -5,7 +5,8 @@ from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import optimizers
 
 img_folder = 'total_sample'
-batches = {16:1024, 32:512, 64:256, 128:128}
+# batches = {16:1024, 32:512, 64:256, 128:128}
+batches = {16:1024}
 
 for batch in batches:
 
@@ -50,7 +51,8 @@ for batch in batches:
     # train the model
     model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
                         validation_data=test_generator, validation_steps=epoch_steps,
-                        epochs=32)
+                        epochs=1)
 
-    model.save('vgg_batch_{}.h5'.format(batch))
+    # model.save('vgg_batch_{}.h5'.format(batch))
+    model.save('vgg_batch.h5'.format(batch))
 
