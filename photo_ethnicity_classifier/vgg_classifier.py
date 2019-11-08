@@ -51,8 +51,8 @@ for batch in batches:
     # train the model
     model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
                         validation_data=test_generator, validation_steps=epoch_steps,
-                        epochs=1)
+                        epochs=2)
 
     # model.save('vgg_batch_{}.h5'.format(batch))
-    model.save('vgg_batch.h5'.format(batch))
+    model.save('vgg.h5'.format(batch))
 
