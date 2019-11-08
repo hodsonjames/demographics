@@ -9,10 +9,9 @@ __pycache__/
 
 # Data
 models/
-sample_photos/
-original_sample_photos/
+small_sample/
+total_sample/
 
-# Utility scripts
 
 # Distribution / packaging
 .Python

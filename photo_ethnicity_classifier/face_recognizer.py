@@ -12,8 +12,9 @@ import time
 import numpy as np
 from sklearn.model_selection import train_test_split
 # from sklearn.neural_network import MLPClassifier
-from sklearn import neighbors
-from sklearn.metrics import accuracy_score
+# from sklearn import neighbors
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
 import os
 import glob
 import cv2
@@ -90,7 +91,7 @@ def main():
 
     for inp_img_path in img_paths:
 
-        if num_images >= 3400:
+        if num_images >= 0:
             break
 
         # this gives us just the img name, such as img_name.jpg
@@ -102,12 +103,13 @@ def main():
         pre_processed_img = preprocess(inp_img_path, out_img_path)
 
         num_images += 1
+        print(num_images)
 
     # Creates and trains a KNN classifier
-    train_model()
+    # train_model()
 
     # test classifier on an individual image
-    # classify_img('23_0_1_20170120133824503.jpg.chip.jpg')
+    classify_img('68561979..jpg')
 
 
 
@@ -157,7 +159,7 @@ def preprocess(inp_path, out_path):
     # shape.  In general, if two face descriptor vectors have a Euclidean
     # distance between them less than 0.6 then they are from the same
     # person, otherwise they are from different people.
-    face_descriptor = facerec.compute_face_descriptor(aligned_img, face_landmarks)
+    face_descriptor = facerec.compute_face_descriptor(aligned_img, face_landmarks, 5)
 
     # add the encodings vector into the features array
     encodings_array = []
@@ -176,7 +178,7 @@ def preprocess(inp_path, out_path):
     # cv2.imshow('img', aligned_img)
     # cv2.waitKey(1000)
 
-    # cv2.imwrite(out_path, aligned_img)
+    cv2.imwrite(out_path, aligned_img)
     return aligned_img
 
 def extract_attribute(img_string):
@@ -190,13 +192,14 @@ def extract_attribute(img_string):
 
 def train_model():
     """
-    Creates and trains a KNN classifier that uses a set of labeled faces to
-    predict the ethnicity in an unknown image by finding the k most similar faces
-    (according to the closest facial features under eucledian distance)
+    Creates and trains a  classifier that uses a set of labeled faces to
+    predict the ethnicity in an unknown image
     """
 
-    print(np.asarray(feature_vecs))
-    print(np.asarray(attributes))
+    np_features = np.asarray(feature_vecs)
+    np_attributes = np.asarray(attributes)
+    np.savetxt('features.txt', np_features, fmt='%s')
+    np.savetxt('attributes.txt', np_attributes, fmt='%s')
     train, test, train_labels, test_labels = train_test_split(feature_vecs,
                                                               attributes,
                                                               test_size=0.25,
@@ -215,21 +218,28 @@ def train_model():
     #                            tol=1e-4)
 
     # Classifier using KNN
-    n_neighbors = int(round(math.sqrt(len(feature_vecs))))
-    classifier = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm='ball_tree', weights='distance')
-    classifier.fit(train, train_labels)
+    # n_neighbors = int(round(math.sqrt(len(feature_vecs))))
+    # classifier = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm='ball_tree', weights='distance')
 
+    # Classifier using Random Forest
+    classifier = RandomForestClassifier(n_estimators=200)
+
+
+    classifier.fit(train, train_labels)
     f = open('model.pkl', 'wb')
     pickle.dump(classifier, f)
     f.close()
 
     preds = classifier.predict(test)
-    accuracy = accuracy_score(test_labels, preds)
-    print(preds)
+    accuracy = metrics.accuracy_score(test_labels, preds)
+    confusion_matrix = metrics.confusion_matrix(test_labels, preds)
+    report = metrics.classification_report(test_labels, preds)
+    print(confusion_matrix)
+    print(report)
     print(accuracy)
 
 
-def classify_img(img_path, knn_clf=None):
+def classify_img(img_path, clf=None):
     """
     Recognizes faces in given image using a trained KNN classifier
     :param img_path: path to image to be recognized
@@ -237,9 +247,9 @@ def classify_img(img_path, knn_clf=None):
     """
 
     # Load a trained KNN model (if one was passed in)
-    if knn_clf is None:
+    if clf is None:
         with open('model.pkl', 'rb') as f:
-            knn_clf = pickle.load(f)
+            clf = pickle.load(f)
 
     # reads the image file and finds its faces, selecting largest
     img = cv2.imread(img_path, 1)
@@ -251,8 +261,9 @@ def classify_img(img_path, knn_clf=None):
     encodings = facerec.compute_face_descriptor(img, face_landmarks)
 
     # Use the KNN model to find the best matches for the test face
-    race = knn_clf.predict([encodings])
+    race = clf.predict([encodings])
     print(race)
+    print(clf.predict_proba([encodings]))
 
 def performanceTest():
     """
