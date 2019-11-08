@@ -42,11 +42,11 @@ sgd = optimizers.SGD(lr=0.00001, decay=1e-6, momentum=0.9, nesterov=True)
 #compile model using accuracy to measure model performance
 model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
-epoch_steps = 1024
+epoch_steps = 2048
 
 #train the model
 model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
                     validation_data=test_generator, validation_steps=epoch_steps,
-                    epochs=2)
+                    epochs=1)
 
 model.save('vgg.h5')
