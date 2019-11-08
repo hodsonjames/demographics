@@ -11,6 +11,7 @@ __pycache__/
 models/
 small_sample/
 total_sample/
+/vgg.h5
 
 
 # Distribution / packaging
