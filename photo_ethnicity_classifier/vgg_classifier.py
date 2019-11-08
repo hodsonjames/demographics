@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import optimizers
 
-img_folder = 'total_sample'
+img_folder = 'small_sample'
 # batches = {16:1024, 32:512, 64:256, 128:128}
 batches = {16:1024}
 
@@ -25,6 +25,10 @@ for batch in batches:
         img_folder, color_mode='rgb', target_size=(150, 150), batch_size=batch, subset='validation',
         shuffle=True
     )
+
+    # confirm the scaling works
+    batchX, batchy = train_generator.next()
+    print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
 
     # load model without classifier layers
     model = VGG16(include_top=False, input_shape=(150, 150, 3))
