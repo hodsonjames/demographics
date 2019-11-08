@@ -13,7 +13,8 @@ for batch in batches:
     train_datagen = ImageDataGenerator(
         width_shift_range=0.2, height_shift_range=0.2, horizontal_flip=True,
         rotation_range=20, brightness_range=[0.5, 1.5], zoom_range=0.2,
-        shear_range=0.2, validation_split=0.2
+        shear_range=0.2, validation_split=0.2,
+        samplewise_center=True, samplewise_std_normalization=True
     )
 
     train_generator = train_datagen.flow_from_directory(
@@ -28,6 +29,7 @@ for batch in batches:
 
     # confirm the scaling works
     batchX, batchy = train_generator.next()
+    print(batchX.shape, batchX.mean(), batchX.std())
     print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
 
     # load model without classifier layers
