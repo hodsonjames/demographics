@@ -13,12 +13,12 @@ train_datagen = ImageDataGenerator(
 )
 
 train_generator = train_datagen.flow_from_directory(
-    img_folder, color_mode='rgb', target_size=(150, 150), batch_size=16, subset='training',
+    img_folder, color_mode='rgb', target_size=(150, 150), batch_size=128, subset='training',
     shuffle=True
 )
 
 test_generator = train_datagen.flow_from_directory(
-    img_folder, color_mode='rgb', target_size=(150, 150), batch_size=16, subset='validation',
+    img_folder, color_mode='rgb', target_size=(150, 150), batch_size=128, subset='validation',
     shuffle=True
 )
 
@@ -42,7 +42,7 @@ sgd = optimizers.SGD(lr=0.00001, decay=1e-6, momentum=0.9, nesterov=True)
 #compile model using accuracy to measure model performance
 model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
 
-epoch_steps = 2048
+epoch_steps = 128
 
 #train the model
 model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
