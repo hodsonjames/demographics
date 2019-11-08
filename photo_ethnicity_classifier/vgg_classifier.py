@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import optimizers
 
-img_folder = 'total_samples'
+img_folder = 'total_sample'
 
 train_datagen = ImageDataGenerator(
     width_shift_range=0.2, height_shift_range=0.2, horizontal_flip=True,
