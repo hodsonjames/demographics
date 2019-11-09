@@ -14,7 +14,7 @@ for batch in batches:
         width_shift_range=0.2, height_shift_range=0.2, horizontal_flip=True,
         rotation_range=20, brightness_range=[0.5, 1.5], zoom_range=0.2,
         shear_range=0.2, validation_split=0.2,
-        samplewise_center=True, samplewise_std_normalization=True
+        rescale=1/255
     )
 
     train_generator = train_datagen.flow_from_directory(
