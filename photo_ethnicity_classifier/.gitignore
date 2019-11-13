@@ -9,8 +9,12 @@ __pycache__/
 
 # Data
 models/
+classified/
+classified - Copy/
 small_sample/
 total_sample/
+original/
+original - Copy/
 /vgg.h5
 
 

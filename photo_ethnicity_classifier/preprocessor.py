@@ -7,6 +7,7 @@ import os
 import dlib
 import glob
 import cv2
+import numpy as np
 
 class Preprocessor():
 
@@ -27,11 +28,13 @@ class Preprocessor():
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor(predic_path)
 
-    def preprocess(self, inp_path):
+    def preprocess(self, inp_path, img_name):
         """
         Detects the face present inside an image and preprocesses it by cropping,
         aligning, and stretching the face according to the specified dimensions.
         :param inp_path: The path to the original image
+        :type inp_path: string
+        :param img_name: The name of the image
         :type inp_path: string
         :return: A numpy array containing the aligned RGB image
         :rtype: numpy.ndarray[(rows,cols,3),uint8]
@@ -42,7 +45,7 @@ class Preprocessor():
 
         # if image file is corrupted, put file into corrupted folder
         if image is None:
-            os.rename(inp_path, self.output_folder + '\\corrupted')
+            os.rename(inp_path, self.output_folder + '\\corrupted\\' + img_name)
             return 'corrupted'
 
         # Ask the detector to find the bounding boxes of each face. The 1 in the
@@ -52,7 +55,7 @@ class Preprocessor():
 
         # if no faces detected, put file into faceless folder
         if len(faces) == 0:
-            os.rename(inp_path, self.output_folder + '\\faceless')
+            os.rename(inp_path, self.output_folder + '\\faceless\\' + img_name)
             return 'faceless'
 
         # select the largest face out of all the faces in the image
@@ -61,15 +64,22 @@ class Preprocessor():
         # Get the landmarks/parts for the face in box face.
         face_landmarks = self.predictor(image, face)
         aligned_img = dlib.get_face_chip(image, face_landmarks)
+
+        # reshape and change type for model requirements
+        aligned_img = aligned_img.reshape((-1, 150, 150, 3))
+        aligned_img = aligned_img.astype(np.float32)
+
         return aligned_img
 
-    def batch_preprocess(self, inp_folder):
+    def batch_preprocess(self, inp_folder, verbose=False):
         """
         Batch preprocesses all the images in the inp_folder, detecting
         the face present inside each image and preprocessing it by cropping,
         aligning, and stretching the face according to the specified dimensions.
         :param inp_folder: The path to the folder containing all images
         :type inp_folder: string
+        :return: An array containing the arrays of the aligned RGB images
+        :rtype: an array of numpy.ndarray[(rows,cols,3),uint8]
         """
 
         # the directory name containing all the image data
@@ -79,13 +89,15 @@ class Preprocessor():
         # list of all the images contained within the input_folder_path
         img_paths = glob.glob(os.path.join(input_folder_path, '**/*.jpg'), recursive=True)
 
-        # array of all preprocessed images
-        imgs_array = []
+        # dict mapping all img paths to their preprocessed img arrays
+        imgs_array = {}
 
         for inp_img_path in img_paths:
-
-            pre_processed_img = self.preprocess(inp_img_path)
-            imgs_array.append(pre_processed_img)
+            img_name = os.path.basename(inp_img_path)
+            if verbose:
+                print('Preprocessing: ' + img_name)
+            pre_processed_img = self.preprocess(inp_img_path, img_name)
+            imgs_array[inp_img_path] = pre_processed_img
 
         return imgs_array
 
