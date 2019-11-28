@@ -4,9 +4,10 @@ from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras import optimizers
 
-img_folder = 'total_sample'
+img_folder = 'training_data'
 # batches = {16:1024, 32:512, 64:256, 128:128}
-batches = {16:1024}
+batches = {16:4096}
+total_classes = 5
 
 for batch in batches:
 
@@ -42,7 +43,7 @@ for batch in batches:
     flat1 = Flatten()(model.output)
     class1 = Dense(1024, activation='relu')(flat1)
     class1 = Dense(512, activation='relu')(flat1)
-    output = Dense(4, activation='softmax')(class1)
+    output = Dense(total_classes, activation='softmax')(class1)
     # define new model
     model = Model(inputs=model.inputs, outputs=output)
 
@@ -57,8 +58,8 @@ for batch in batches:
     # train the model
     model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
                         validation_data=test_generator, validation_steps=epoch_steps,
-                        epochs=32)
+                        epochs=1)
 
     # model.save('vgg_batch_{}.h5'.format(batch))
-    model.save('vgg.h5'.format(batch))
+    model.save('cnn_aug_128.h5'.format(batch))
 
