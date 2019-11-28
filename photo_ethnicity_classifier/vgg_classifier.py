@@ -28,11 +28,6 @@ for batch in batches:
         shuffle=True
     )
 
-    # confirm the scaling works
-    batchX, batchy = train_generator.next()
-    print(batchX.shape, batchX.mean(), batchX.std())
-    print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
-
     # load model without classifier layers
     model = VGG16(include_top=False, input_shape=(150, 150, 3))
 
