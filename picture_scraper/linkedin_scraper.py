@@ -43,7 +43,7 @@ sign_in_button.click()
 
 # get all the saved photo urls as a numpy array
 photo_urls = np.genfromtxt('photo_urls.txt', dtype='str', max_rows=1000)
-photo_urls = photo_urls[149:]
+# photo_urls = photo_urls[149:]
 print(photo_urls)
 
 num_images = 0
@@ -52,8 +52,8 @@ unavailable_profile = 0
 no_picture = 0
 actual_images = 0
 for photo_url in photo_urls:
-    sleep(1)
-    if num_images >= 150:
+    sleep(2)
+    if num_images >= 50:
         break
 
     num_images += 1
@@ -87,7 +87,7 @@ for photo_url in photo_urls:
         continue
 
     # download the image
-    urllib.request.urlretrieve(picture_url, "photos\\profile{}.png".format(150 + num_images))
+    urllib.request.urlretrieve(picture_url, "photos\\profile{}.png".format(num_images))
     actual_images += 1
 
 driver.quit()

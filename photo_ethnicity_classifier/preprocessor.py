@@ -11,9 +11,7 @@ import numpy as np
 
 class Preprocessor():
 
-    def __init__(self, output_folder, file_path):
-
-        self.output_folder = output_folder
+    def __init__(self, file_path):
 
         self.file_path = file_path
         models_path = self.file_path + "/models/"
@@ -45,7 +43,6 @@ class Preprocessor():
 
         # if image file is corrupted, put file into corrupted folder
         if image is None:
-            os.rename(inp_path, self.output_folder + '\\corrupted\\' + img_name)
             return 'corrupted'
 
         # Ask the detector to find the bounding boxes of each face. The 1 in the
@@ -55,7 +52,6 @@ class Preprocessor():
 
         # if no faces detected, put file into faceless folder
         if len(faces) == 0:
-            os.rename(inp_path, self.output_folder + '\\faceless\\' + img_name)
             return 'faceless'
 
         # select the largest face out of all the faces in the image
