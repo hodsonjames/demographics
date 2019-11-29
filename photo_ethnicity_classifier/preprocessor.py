@@ -60,7 +60,6 @@ class Preprocessor():
         # Get the landmarks/parts for the face in box face.
         face_landmarks = self.predictor(image, face)
         aligned_img = dlib.get_face_chip(image, face_landmarks)
-
         # reshape and change type for model requirements
         aligned_img = aligned_img.reshape((-1, 150, 150, 3))
         aligned_img = aligned_img.astype(np.float32)
