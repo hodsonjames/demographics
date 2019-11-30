@@ -53,8 +53,8 @@ for batch in batches:
     # train the model
     model.fit_generator(train_generator, steps_per_epoch=epoch_steps,
                         validation_data=test_generator, validation_steps=epoch_steps,
-                        epochs=128)
+                        epochs=256)
 
     # model.save('vgg_batch_{}.h5'.format(batch))
-    model.save('cnn_aug_128.h5'.format(batch))
+    model.save('cnn_aug_256.h5'.format(batch))
 
