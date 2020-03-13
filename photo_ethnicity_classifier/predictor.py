@@ -1,3 +1,5 @@
+# use the model to predict an image/set of images
+
 import dlib
 from tensorflow.keras.models import load_model
 import cv2
@@ -29,9 +31,4 @@ for img_path, img_array in imgs_array.items():
     predicted_class = prediction.argmax(axis=-1)
     prediction = np.around(prediction[0], decimals=3)
     os.rename(img_path, output_folder + '\\{}\\'.format(races[predicted_class]) + img_name)
-
-# print('White: ' + str(prediction[0]) +
-#       '\nBlack: ' + str(prediction[1]) +
-#       '\nAsian: ' + str(prediction[2]) +
-#       '\nIndian: ' + str(prediction[3]))
 

@@ -1,3 +1,5 @@
+# test the model and obtain results in matrix form
+
 from tensorflow.keras.models import load_model
 import os
 import numpy as np
@@ -5,7 +7,7 @@ from preprocessor import Preprocessor
 
 races = {0: 'white', 1: 'black', 2: 'asian', 3: 'indian'}
 
-model = load_model('models\cnn_aug_128.h5')
+model = load_model('models\cnn_aug_256.h5')
 file_path = os.path.abspath(os.path.dirname(__file__))
 
 input_folder = 'testing_data'

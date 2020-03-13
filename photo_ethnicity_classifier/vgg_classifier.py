@@ -1,3 +1,5 @@
+# trains the model according to the CNN specifications provided
+
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Flatten

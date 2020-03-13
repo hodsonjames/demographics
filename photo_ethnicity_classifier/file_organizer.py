@@ -1,3 +1,5 @@
+# script to organize images in the folder into their racial categories
+
 import os
 import glob
 

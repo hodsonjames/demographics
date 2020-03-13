@@ -1,3 +1,5 @@
+# script to create the manually labelled gold standard data in a fast, efficient manner
+
 import os
 import glob
 import cv2

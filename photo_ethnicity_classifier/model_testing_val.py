@@ -1,12 +1,14 @@
+# test the model specifically on the FairFace pre-labelled validation data
+
 from tensorflow.keras.models import load_model
 import os
 import numpy as np
 from preprocessor import Preprocessor
 import csv
 
-races = {0: 'white', 1: 'black', 2: 'asian', 3: 'indian'}
+races = {0: 'white', 1: 'black', 2: 'asian', 3: 'indian', 4: 'hispanic'}
 
-model = load_model('models/cnn_vgg_256.h5')
+model = load_model('models/cnn_aug_256.h5')
 file_path = os.path.abspath(os.path.dirname(__file__))
 
 f = open('fairface_label_val.csv')
