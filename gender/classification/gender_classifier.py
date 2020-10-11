@@ -1,7 +1,5 @@
 # Author: Kunal Adhia
 
-# Link to Google Colab Code: https://colab.research.google.com/drive/10gE0rhVO6KQC-RnEMhi6X3EbRNHPrUU_?usp=sharing
-
 import numpy as np
 import pandas as pd
 import json
@@ -12,9 +10,10 @@ from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
+from xpinyin import Pinyin
 
 COMMON_PREFIXES = ['mr.', 'dr.', 'ms.', 'mrs.', 'mr', 'dr', 'ms', 'mrs', 'sir', 'ca', 'ca.']
-
+# Load the raw sample data and extract names
 # Load the raw sample data and extract names
 def load_sample_dataset(file_name):
     df = None
@@ -83,7 +82,7 @@ def approach_1(df, training_data):
       for line in f:
         if ' ' in line:
           name = line[:line.index(' ')]
-          if name not in training_data.keys():
+          if name.lower() not in training_data.keys():
             training_data[name.lower()] = 'F'
             names_list_f.append(name.lower())
 
@@ -102,7 +101,6 @@ def approach_1(df, training_data):
     return df, training_data
 
 ##### APPROACH 2 #####
-
 def extract_country_name(line):
   # strips the white spaces from the beginning and end of the line
   # we should be left with just the name of the country.
@@ -226,6 +224,57 @@ def approach_3(df, training_data):
 
     return df, training_data
 
+
+def num_to_gender(val):
+  if val in [1, '1']:
+    return 'M'
+  elif val in [0, '0']:
+    return 'F'
+
+##### APPROACH 4 #####
+def approach_4(df, training_data):
+    indian_names_df = pd.read_csv('gender_refine-csv.csv')
+    for row in indian_names_df.iterrows():
+        if row[1]["name"].lower() not in training_data.keys():
+            training_data[row[1]["name"].lower()] = num_to_gender(row[1]["gender"])
+    df['CLASSIFY4'] = df['filtered_first'].apply(lambda x: training_data.get(x, None))
+    return df, training_data
+
+##### APPROACH 5 #####
+def approach_5(df, training_data_permanant):
+    training_data = training_data_permanant.copy() # We don't want to use this for training the model
+    female_chinese, male_chinese = [], []
+    with open('female_c.txt') as f:
+        for line in f:
+            line = line.replace('\n', '').replace('\t', ' ')
+            vals = line.split(' ')
+            cleaned_vals = [i for i in vals if i]
+            female_chinese += cleaned_vals
+    p = Pinyin()
+    converted_female_chinese = [p.get_pinyin(i).replace('、', ' ').replace('-', '').replace('\n', '') for i in female_chinese]
+    for i in converted_female_chinese:
+        if i not in training_data.keys():
+            training_data[i] = 'F'
+        if i + i not in training_data.keys():
+            training_data[i + i] = 'F'
+
+    with open('male_c.txt') as f:
+        for line in f:
+            line = line.replace('\n', '').replace('\t', ' ')
+            vals = line.split(' ')
+            cleaned_vals = [i for i in vals if i]
+            male_chinese += cleaned_vals
+
+    converted_male_chinese = [p.get_pinyin(i).replace('、', ' ').replace('-', '').replace('\n', '') for i in male_chinese]
+    for i in converted_male_chinese:
+        if i not in training_data.keys():
+            training_data[i] = 'M'
+        if i + i not in training_data.keys():
+            training_data[i + i] = 'M'
+
+    df['CLASSIFY5'] = df['filtered_first'].apply(lambda x: training_data.get(x, None))
+    return df
+
 def country_based_model(df, input_df, model_evaluator):
     input_df['-3'] = input_df['name'].str[-3]
     input_df['-2'] = input_df['name'].str[-2]
@@ -236,7 +285,6 @@ def country_based_model(df, input_df, model_evaluator):
     input_df = pd.concat([vectorized_name[0], vectorized_name[1], vectorized_name[2], input_df], axis = 1)
 
     cY = input_df['gender'].head(39469)
-    print(cY)
     input_df = input_df.drop(columns = ['name', 'gender', '-3', '-2', '-1'])
 
     cX = input_df.head(39469)
@@ -245,7 +293,6 @@ def country_based_model(df, input_df, model_evaluator):
     model = RidgeClassifier(fit_intercept = False, solver = 'lsqr')
     model.fit(cX_train, cy_train)
 
-    print(model.score(cX_test, cy_test))
     training_predictions = model.predict(input_df.head(39469))
     model_evaluator['MODEL_PREDICTION'] = training_predictions
     country_model_predictions = model.predict(input_df.tail(1000))
@@ -256,6 +303,7 @@ def country_based_model(df, input_df, model_evaluator):
 def general_model(df, training_data):
     ml_names, ml_genders = [], []
     for k, v in training_data.items():
+      k = re.sub('[^a-z]+', '?', k)
       ml_names.append(k)
       ml_genders.append(v)
 
@@ -265,12 +313,9 @@ def general_model(df, training_data):
     training_df['-3'] = training_df['name'].str[-3]
     training_df['-2'] = training_df['name'].str[-2]
     training_df['-1'] = training_df['name'].str[-1]
+
     columns = ['-3','-2', '-1']
     X = [pd.get_dummies(training_df[i]) for i in columns]
-
-    X[0] = X[0].drop(columns = ['+', ',', '-', '/', '<', '>', '^'])
-    X[1] = X[1].drop(columns = ['\'', '+', ',', '/', '>', '^'])
-    X[2] = X[2].drop(columns = ['>'])
 
     modelX = pd.concat([i for i in X], axis=1)
 
@@ -292,6 +337,7 @@ def general_model(df, training_data):
     model.fit(X_train, y_train)
     training_df['pred'] = model.predict(modelX)
     training_df['pred'] = training_df['pred'].apply(to_gender_class)
+    print("Model Scores (Train/Test):")
     print(model.score(X_train, y_train))
     print(model.score(X_test, y_test))
     # training_df[training_df['gender'] != training_df['pred']]
@@ -315,6 +361,7 @@ def general_model(df, training_data):
           i[j] = [0 for k in range(1000)]
 
     actualX = pd.concat([i for i in tempX], axis=1)
+
     def map_to_gender(x):
       if x:
         return 'F'
@@ -327,8 +374,8 @@ def general_model(df, training_data):
     return df
 
 def create_final_prediction(row):
-  if row['CLASSIFY3'] == 'M' or row['CLASSIFY3'] == 'F':
-    return row['CLASSIFY3']
+  if row['CLASSIFY5'] == 'M' or row['CLASSIFY5'] == 'F':
+    return row['CLASSIFY5']
   return row['model_prediction']
 
 def map_to_full(x):
@@ -356,6 +403,8 @@ df, training_data = approach_0(df, training_data)
 df, training_data = approach_1(df, training_data)
 df, input_df, model_evaluator, training_data = approach_2(df, training_data)
 df, training_data = approach_3(df, training_data)
+df, training_data = approach_4(df, training_data)
+df = approach_5(df, training_data)
 
 # Train and predict using the two types of models
 df, model_evaluator = country_based_model(df, input_df, model_evaluator)
@@ -370,4 +419,4 @@ model_evaluator.to_csv('country_based_model_training_data_results_new.csv')
 
 # Final Predictions
 populate_fields_with_final_predictions(df)
-print(df)
+df.to_csv("final_results.csv")
