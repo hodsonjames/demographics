@@ -61,7 +61,7 @@ def clean_and_extract_first_name(df):
 # Process SSN data
 def approach_0(df, training_data):
     class_0_names, class_0_genders = [], []
-    with open("combined_ss_data.txt") as f:
+    with open("data/combined_ss_data.txt") as f:
       for line in f:
         name = line[:line.index(',')].lower()
         if name not in training_data:
@@ -78,7 +78,7 @@ def approach_0(df, training_data):
 def approach_1(df, training_data):
     names_list_m, names_list_f = [], []
 
-    with open('female.txt') as f:
+    with open('data/female.txt') as f:
       for line in f:
         if ' ' in line:
           name = line[:line.index(' ')]
@@ -86,7 +86,7 @@ def approach_1(df, training_data):
             training_data[name.lower()] = 'F'
             names_list_f.append(name.lower())
 
-    with open('male.txt') as g:
+    with open('data/male.txt') as g:
       for line in g:
         if ' ' in line:
           name = line[:line.index(' ')]
@@ -167,7 +167,7 @@ def approach_2(df, training_data):
     country_names, country_columns = [], []
     line_counter = 0
     popularity_by_country = [[] for i in range(55)]
-    with open('nam_dict.txt') as f:
+    with open('data/nam_dict.txt') as f:
       for line in f:
         if line_counter in range(177, 342, 3):
           processed_line = line.replace('#', '').replace('$', '').replace('\n', '')
@@ -214,7 +214,7 @@ def approach_2(df, training_data):
 ##### APPROACH 3 #####
 def approach_3(df, training_data):
     # Process our outside data source
-    outside_data = pd.read_csv('name_gender.csv')
+    outside_data = pd.read_csv('data/name_gender.csv')
     outside_data['name'] = outside_data['name'].apply(lambda x: x.lower())
 
     for row in outside_data.iterrows():
@@ -233,7 +233,7 @@ def num_to_gender(val):
 
 ##### APPROACH 4 #####
 def approach_4(df, training_data):
-    indian_names_df = pd.read_csv('gender_refine-csv.csv')
+    indian_names_df = pd.read_csv('data/gender_refine-csv.csv')
     for row in indian_names_df.iterrows():
         if row[1]["name"].lower() not in training_data.keys():
             training_data[row[1]["name"].lower()] = num_to_gender(row[1]["gender"])
@@ -244,7 +244,7 @@ def approach_4(df, training_data):
 def approach_5(df, training_data_permanant):
     training_data = training_data_permanant.copy() # We don't want to use this for training the model
     female_chinese, male_chinese = [], []
-    with open('female_c.txt') as f:
+    with open('data/female_c.txt') as f:
         for line in f:
             line = line.replace('\n', '').replace('\t', ' ')
             vals = line.split(' ')
@@ -258,7 +258,7 @@ def approach_5(df, training_data_permanant):
         if i + i not in training_data.keys():
             training_data[i + i] = 'F'
 
-    with open('male_c.txt') as f:
+    with open('data/male_c.txt') as f:
         for line in f:
             line = line.replace('\n', '').replace('\t', ' ')
             vals = line.split(' ')
@@ -387,8 +387,8 @@ def populate_fields_with_final_predictions(df):
     classified_vals = df['final_prediction'].to_list()
 
     counter = 0
-    g = open("gender_sample_final.jsonl", 'w')
-    with open("gender_sample.jsonl") as f:
+    g = open("output/gender_sample_final.jsonl", 'w')
+    with open("input/gender_sample.jsonl") as f:
       for line in f:
         j = json.loads(line)
         j["gender"] = classified_vals[counter]
@@ -396,7 +396,7 @@ def populate_fields_with_final_predictions(df):
         counter += 1
     g.close()
 
-df = load_sample_dataset("gender_sample.jsonl")
+df = load_sample_dataset("input/gender_sample.jsonl")
 df = clean_and_extract_first_name(df)
 training_data = {}
 df, training_data = approach_0(df, training_data)
@@ -414,9 +414,9 @@ df['final_prediction'] = df.apply(create_final_prediction, axis = 1)
 df['final_prediction'] = df['final_prediction'].apply(map_to_full)
 
 # Save data
-df.to_csv('full_classifier_predictions_new.csv')
-model_evaluator.to_csv('country_based_model_training_data_results_new.csv')
+df.to_csv('output/full_classifier_predictions_new.csv')
+model_evaluator.to_csv('output/country_based_model_training_data_results_new.csv')
 
 # Final Predictions
 populate_fields_with_final_predictions(df)
-df.to_csv("final_results.csv")
+df.to_csv("output/final_results.csv")
