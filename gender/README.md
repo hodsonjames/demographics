@@ -3,8 +3,15 @@
 This algorithm attempts to classify gender (M/F) from employment profiles using the given first name and country data. Created by Kunal Adhia. Advisors: James Hodson, Anastassia Fedyk.
 
 # Instructions
-To run, please ensure that all necessary libraries (numpy, pandas, sklearn, xpinyn) are installed. Python 3 was used for this project. Simply clone this repository and run "python3 gender_classifier.py".
+To run, please ensure that all necessary libraries (numpy, pandas, sklearn, xpinyn) are installed. Python 3 was used for this project. Simply clone this repository and take the following steps with Python3:
 
+```Python
+>>> from gender_classifier import *
+>>> g = GenderClassifier()
+Ready
+>>> g.predict('Albert Einstein')
+'M'
+```
 # Approach
 
 When performing introductory searches and analyses on the input data set, available data sets online, and the capabilities of simple classifier models, the following observations were made:
